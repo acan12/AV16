@@ -16,6 +16,7 @@ import java.net.URL;
 import labs.bee.app.av16.AudioVideoRecordingActivity;
 import labs.bee.app.av16.R;
 import labs.bee.app.av16.support.IConfig;
+import labs.bee.app.av16.support.tools.Mux;
 
 /**
  * Created by arysuryawan on 12/1/16.
@@ -25,9 +26,11 @@ public class ProgressService extends AsyncTask<String, String, String> {
     ProgressDialog progressDialog;
     Context context;
     String audioSavePathInDevice;
+    String audioPath;
 
-    public ProgressService(String audioSavePathInDevice, Context context) {
+    public ProgressService(String audioSavePathInDevice, String audioPath, Context context) {
         this.audioSavePathInDevice = audioSavePathInDevice;
+        this.audioPath = audioPath;
         this.context = context;
     }
 
@@ -39,7 +42,7 @@ public class ProgressService extends AsyncTask<String, String, String> {
 
     @Override
     protected String doInBackground(String... params) {
-        downloadFile(IConfig.VIDEO_URL, "Sample.mp4", audioSavePathInDevice);
+        downloadFile(IConfig.VIDEO_URL, "dodol.mp4", audioSavePathInDevice, audioPath);
         return null;
     }
 
@@ -50,18 +53,25 @@ public class ProgressService extends AsyncTask<String, String, String> {
     }
 
 
-    private void downloadFile(String fileURL, String fileName, String audioFilePath) {
+    private void downloadFile(String fileURL, String fileName, String audioFilePath, String audioPath) {
         try {
             String rootDir = Environment.getExternalStorageDirectory()
-                    + File.separator + context.getResources().getString(R.string.app_name) + File.separator ;
-            File rootFile = new File(rootDir+ "Video");
+                    + File.separator + context.getResources().getString(R.string.app_name) + File.separator;
+
+            String videoPath = rootDir + "Video" + File.separator;
+            File rootFile = new File(videoPath);
             rootFile.mkdir();
             URL url = new URL(fileURL);
             HttpURLConnection c = (HttpURLConnection) url.openConnection();
             c.setRequestMethod("GET");
             c.setDoOutput(true);
             c.connect();
-            FileOutputStream f = new FileOutputStream(new File(rootFile, fileName));
+
+            File file = new File(videoPath,fileName);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileOutputStream f = new FileOutputStream(file);
             InputStream in = c.getInputStream();
             byte[] buffer = new byte[1024];
             int len1 = 0;
@@ -69,9 +79,14 @@ public class ProgressService extends AsyncTask<String, String, String> {
                 f.write(buffer, 0, len1);
             }
             f.close();
+            in.close();
+            c.disconnect();
 
-            AudioVideoRecordingActivity.setupMuxAV(rootFile+fileName, audioFilePath);
-        } catch (IOException e) {
+
+            String outputFilePath = videoPath + "output.mp4";
+
+            Mux.doMux(videoPath+"dodol.mp4", audioFilePath, outputFilePath);
+        } catch (Exception e) {
             Log.d("Error....", e.toString());
         }
 

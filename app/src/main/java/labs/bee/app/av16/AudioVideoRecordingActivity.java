@@ -18,17 +18,8 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.coremedia.iso.boxes.Container;
-import com.googlecode.mp4parser.FileDataSourceImpl;
-import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
-import com.googlecode.mp4parser.authoring.tracks.AACTrackImpl;
-import com.googlecode.mp4parser.authoring.tracks.H264TrackImpl;
-
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.util.Random;
 
 import butterknife.BindView;
@@ -62,6 +53,8 @@ public class AudioVideoRecordingActivity extends AppCompatActivity {
     ProgressService progressBack;
 
     String audioSavePathInDevice = null;
+    String audioPath = null;
+
     MediaRecorder mediaRecorder;
     Random random;
     String RandomAudioFileName = "ABCDEFGHIJKLMNOP";
@@ -88,11 +81,11 @@ public class AudioVideoRecordingActivity extends AppCompatActivity {
 
                 if (checkPermission()) {
 
-                    String rootPath =
+                    audioPath =
                             IConfig.SDCARD_PATH + File.separator + getResources().getString(R.string.app_name) + File.separator + "Audio" + File.separator;
-                    audioSavePathInDevice = rootPath + CreateRandomAudioFileName(5) + "AudioRecording.3gp";
+                    audioSavePathInDevice = audioPath + CreateRandomAudioFileName(5) + "AudioRecording.3gp";
 
-                    new File(rootPath).mkdirs();
+                    new File(audioPath).mkdirs();
                     MediaRecorderReady();
 
 
@@ -134,7 +127,7 @@ public class AudioVideoRecordingActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
 
                 // testing video download  convert to file
-                progressBack = new ProgressService(audioSavePathInDevice, AudioVideoRecordingActivity.this);
+                progressBack = new ProgressService(audioSavePathInDevice, audioPath, AudioVideoRecordingActivity.this);
                 progressBack.execute("");
             }
         });
@@ -177,28 +170,6 @@ public class AudioVideoRecordingActivity extends AppCompatActivity {
                 }
             }
         });
-
-    }
-
-
-    public static void setupMuxAV(String videoPath, String audioPath) {
-
-        try {
-
-            H264TrackImpl h264Track = new H264TrackImpl(new FileDataSourceImpl(videoPath));
-            AACTrackImpl aa = new AACTrackImpl(new FileDataSourceImpl(audioPath));
-
-            Movie mov = new Movie();
-            mov.addTrack(h264Track);
-            mov.addTrack(aa);
-
-            Container mp4file = new DefaultMp4Builder().build(mov);
-            FileChannel fc = new FileOutputStream(new File("output.mp4")).getChannel();
-            fc.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
